@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" href="data:,">
+<title>JD Studios — Tu idea, hecha web</title>
+<style>
+  :root {
+    --fondo: #060a14;
+    --fondo2: #0a0f1f;
+    --cian: #22d3ee;
+    --violeta: #818cf8;
+    --rosa: #f472b6;
+    --texto: #e6edf7;
+    --gris: #8fa3bd;
+    --borde: rgba(255,255,255,0.09);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    background: var(--fondo);
+    color: var(--texto);
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+  ::selection { background: var(--cian); color: #05121a; }
+
+  /* ---------- Lienzo de partículas ---------- */
+  #particulas { position: fixed; inset: 0; z-index: 1; pointer-events: none; }
+
+  /* ---------- Aura de fondo ---------- */
+  #aurora {
+    position: fixed; inset: -20%; z-index: 0; pointer-events: none;
+    background:
+      radial-gradient(40% 40% at 15% 20%, rgba(34,211,238,0.16), transparent 60%),
+      radial-gradient(40% 40% at 85% 15%, rgba(129,140,248,0.16), transparent 60%),
+      radial-gradient(45% 45% at 70% 90%, rgba(244,114,182,0.1), transparent 60%);
+    filter: blur(30px);
+    animation: auroraFloat 18s ease-in-out infinite alternate;
+  }
+  @keyframes auroraFloat {
+    0%   { transform: translate(0, 0) scale(1); }
+    50%  { transform: translate(-3%, 2%) scale(1.08); }
+    100% { transform: translate(3%, -2%) scale(1.05); }
+  }
+
+  /* ---------- Navbar ---------- */
+  nav {
+    position: fixed; top: 0; left: 0; width: 100%; z-index: 100;
+    padding: 18px 6%; display: flex; align-items: center; justify-content: space-between;
+    transition: background .4s, box-shadow .4s, padding .4s;
+  }
+  nav.compact {
+    background: rgba(6,10,20,0.75); backdrop-filter: blur(14px);
+    box-shadow: 0 4px 30px rgba(0,0,0,0.4);
+    padding: 12px 6%;
+  }
+  .logo { font-size: 24px; font-weight: 800; letter-spacing: 1px; color: #fff; z-index: 2; }
+  .logo span { color: var(--cian); text-shadow: 0 0 18px rgba(34,211,238,0.8); }
+  .links { display: flex; gap: 30px; }
+  .links a {
+    color: var(--gris); text-decoration: none; font-size: 15px; font-weight: 500;
+    position: relative; padding: 4px 0; transition: color .2s;
+  }
+  .links a::after {
+    content: ""; position: absolute; left: 0; bottom: -2px; width: 0; height: 2px;
+    background: linear-gradient(90deg, var(--cian), var(--violeta));
+    border-radius: 2px; transition: width .3s;
+  }
+  .links a:hover { color: #fff; }
+  .links a:hover::after, .links a.activo::after { width: 100%; }
+  .links a.activo { color: var(--cian); }
+  .burger {
+    display: none; flex-direction: column; gap: 5px; cursor: pointer; z-index: 2;
+    background: none; border: none; padding: 6px;
+  }
+  .burger span { width: 26px; height: 3px; background: #fff; border-radius: 3px; transition: .3s; }
+
+  /* ---------- Portada ---------- */
+  #inicio {
+    min-height: 100vh; position: relative; z-index: 2;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; padding: 120px 6% 90px;
+  }
+  .orbita {
+    position: relative; width: 96px; height: 96px; margin-bottom: 8px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .orbita .nucleo {
+    width: 56px; height: 56px; border-radius: 50%; z-index: 2;
+    background: radial-gradient(circle at 30% 30%, #7ff3ff, var(--cian) 45%, #0e7490);
+    box-shadow: 0 0 36px rgba(34,211,238,0.85), 0 0 80px rgba(34,211,238,0.35);
+    display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 800; color: #05222b;
+  }
+  .orbita .anillo {
+    position: absolute; inset: 0; border-radius: 50%;
+    border: 1px dashed rgba(34,211,238,0.5);
+    animation: girar 8s linear infinite;
+  }
+  .orbita .anillo2 {
+    position: absolute; inset: 12px; border-radius: 50%;
+    border: 1px dashed rgba(129,140,248,0.5);
+    animation: girar 5s linear infinite reverse;
+  }
+  @keyframes girar { to { transform: rotate(360deg); } }
+  .badge {
+    display: inline-flex; align-items: center; gap: 8px; margin-bottom: 24px;
+    padding: 9px 20px; font-size: 13px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase;
+    color: #a5f3fc; border: 1px solid rgba(34,211,238,0.35); border-radius: 50px;
+    background: rgba(34,211,238,0.08); backdrop-filter: blur(6px);
+  }
+  .badge .punto { width: 8px; height: 8px; border-radius: 50%; background: #22d3ee; animation: pulsar 1.6s infinite; }
+  @keyframes pulsar { 0%,100% { box-shadow: 0 0 0 0 rgba(34,211,238,0.6);} 50% { box-shadow: 0 0 0 8px rgba(34,211,238,0);} }
+  h1 { font-size: clamp(44px, 9vw, 96px); font-weight: 900; line-height: 1.02; letter-spacing: -1px; }
+  .jd, .studios {
+    background: linear-gradient(100deg, #67e8f9, #818cf8, #f472b6, #67e8f9);
+    background-size: 300% 300%;
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    animation: gradiente 6s ease infinite;
+  }
+  @keyframes gradiente { 0%,100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+  .eslogan { font-size: clamp(18px, 3.4vw, 28px); color: var(--gris); margin: 26px 0 8px; font-weight: 400; }
+  .maquina { font-size: clamp(15px, 2.4vw, 20px); color: #a5f3fc; min-height: 30px; margin-bottom: 38px; }
+  .maquina .cursor { display: inline-block; width: 2px; height: 1.1em; background: var(--cian); margin-left: 3px; vertical-align: -2px; animation: blink 0.9s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  .ctas { display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; align-items: center; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 16px 34px; font-size: 16px; font-weight: 700; border-radius: 14px;
+    text-decoration: none; position: relative; overflow: hidden; transition: transform .25s, box-shadow .25s;
+  }
+  .btn-primario {
+    color: #05222b; background: linear-gradient(100deg, #22d3ee, #818cf8);
+    background-size: 200% 200%; animation: gradiente 4s ease infinite;
+    box-shadow: 0 10px 36px rgba(34,211,238,0.4);
+  }
+  .btn-primario:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 16px 50px rgba(34,211,238,0.55); }
+  .btn-ghost {
+    color: var(--texto); border: 1px solid var(--borde); background: rgba(255,255,255,0.04);
+    backdrop-filter: blur(8px);
+  }
+  .btn-ghost:hover { transform: translateY(-3px); border-color: rgba(34,211,238,0.5); box-shadow: 0 10px 30px rgba(34,211,238,0.15); }
+  .btn::after {
+    content: ""; position: absolute; top: 0; left: -120%; width: 60%; height: 100%;
+    background: linear-gradient(100deg, transparent, rgba(255,255,255,0.45), transparent);
+    transform: skewX(-20deg); transition: left .6s;
+  }
+  .btn:hover::after { left: 160%; }
+
+  .scroll-ind {
+    position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+    display: flex; flex-direction: column; align-items: center; gap: 8px; color: var(--gris); font-size: 12px; letter-spacing: 2px;
+  }
+  .raton { width: 26px; height: 42px; border: 2px solid var(--gris); border-radius: 14px; position: relative; }
+  .raton::after { content: ""; position: absolute; top: 6px; left: 50%; transform: translateX(-50%); width: 4px; height: 8px; border-radius: 3px; background: var(--cian); animation: rueda 1.6s infinite; }
+  @keyframes rueda { 0% { opacity: 1; top: 6px; } 70% { opacity: 0; top: 22px; } 100% { opacity: 0; } }
+
+  /* ---------- Marquesina ---------- */
+  .marquesina {
+    border-top: 1px solid var(--borde); border-bottom: 1px solid var(--borde);
+    background: rgba(255,255,255,0.02); overflow: hidden; padding: 18px 0; white-space: nowrap;
+  }
+  .marquesina .pista { display: inline-block; animation: scrollX 26s linear infinite; will-change: transform; }
+  .marquesina .pista span { font-size: 15px; font-weight: 600; color: var(--gris); margin: 0 24px; letter-spacing: 2px; text-transform: uppercase; }
+  .marquesina .pista span i { color: var(--cian); font-style: normal; margin-right: 6px; }
+  @keyframes scrollX { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+  /* ---------- Secciones ---------- */
+  section { position: relative; z-index: 2; padding: 100px 6%; max-width: 1150px; margin: 0 auto; }
+  .cabecera { text-align: center; margin-bottom: 54px; }
+  .etiqueta {
+    display: inline-block; font-size: 12px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase;
+    color: var(--cian); margin-bottom: 12px;
+  }
+  h2 { font-size: clamp(30px, 5vw, 44px); font-weight: 800; line-height: 1.15; }
+  h2 .grado {
+    background: linear-gradient(100deg, #67e8f9, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+  .cabecera p { color: var(--gris); font-size: 17px; max-width: 680px; margin: 16px auto 0; }
+
+  /* ---------- Tarjetas 3D ---------- */
+  .servicios { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 22px; perspective: 1200px; }
+  .card {
+    background: rgba(255,255,255,0.035); border: 1px solid var(--borde); border-radius: 20px;
+    padding: 28px 24px; text-align: left; position: relative; overflow: hidden;
+    transition: transform .2s, border-color .3s, box-shadow .3s; transform-style: preserve-3d;
+  }
+  .card::before {
+    content: ""; position: absolute; inset: 0; opacity: 0; transition: opacity .4s;
+    background: radial-gradient(400px circle at var(--mx, 50%) var(--my, 50%), rgba(34,211,238,0.14), transparent 60%);
+  }
+  .card:hover { border-color: rgba(34,211,238,0.45); box-shadow: 0 20px 50px rgba(0,0,0,0.45); }
+  .card:hover::before { opacity: 1; }
+  .card .icono {
+    width: 58px; height: 58px; border-radius: 16px; display: flex; align-items: center; justify-content: center;
+    font-size: 26px; background: rgba(34,211,238,0.1); border: 1px solid rgba(34,211,238,0.25);
+    margin-bottom: 18px; }
+  .card h3 { font-size: 18px; font-weight: 700; margin-bottom: 8px; color: #fff; }
+  .card p { font-size: 14px; color: var(--gris); }
+  .card .num {
+    position: absolute; top: 18px; right: 22px; font-size: 40px; font-weight: 900;
+    color: rgba(255,255,255,0.06); transition: color .3s;
+  }
+  .card:hover .num { color: rgba(34,211,238,0.25); }
+
+  /* ---------- Cifras ---------- */
+  .cifras { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 18px; margin-top: 60px; }
+  .cifra {
+    text-align: center; padding: 26px 12px; border-radius: 18px; border: 1px solid var(--borde);
+    background: rgba(255,255,255,0.03);
+  }
+  .cifra .valor { font-size: 40px; font-weight: 900; background: linear-gradient(100deg, #67e8f9, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .cifra .label { font-size: 13px; color: var(--gris); margin-top: 4px; letter-spacing: 1px; text-transform: uppercase; }
+
+  /* ---------- Mensaje CTA ---------- */
+  .llamado {
+    margin-top: 64px; padding: 46px 36px; text-align: center; border-radius: 24px;
+    border: 1px solid rgba(34,211,238,0.3); position: relative; overflow: hidden;
+    background: linear-gradient(120deg, rgba(34,211,238,0.12), rgba(129,140,248,0.12));
+    backdrop-filter: blur(10px);
+  }
+  .llamado::before {
+    content: ""; position: absolute; top: -60%; left: -20%; width: 70%; height: 220%;
+    background: linear-gradient(90deg, transparent, rgba(103,232,249,0.15), transparent);
+    animation: barrido 5s ease-in-out infinite;
+  }
+  @keyframes barrido { 0% { transform: translateX(-80%) rotate(8deg);} 60%,100% { transform: translateX(220%) rotate(8deg);} }
+  .llamado h3 { font-size: 26px; font-weight: 800; }
+  .llamado h3 .grado { background: linear-gradient(100deg, #67e8f9, #818cf8, #f472b6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .llamado p { color: var(--gris); margin: 12px 0 26px; }
+
+  /* ---------- Contacto ---------- */
+  .contacto-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 22px; }
+  .contacto {
+    display: flex; align-items: center; gap: 18px; padding: 26px; text-decoration: none; color: var(--texto);
+    border-radius: 20px; border: 1px solid var(--borde); background: rgba(255,255,255,0.035);
+    position: relative; overflow: hidden; transition: transform .25s, border-color .3s, box-shadow .3s;
+  }
+  .contacto::before {
+    content: ""; position: absolute; inset: 0; opacity: 0; transition: opacity .35s;
+    background: radial-gradient(300px circle at var(--mx,50%) var(--my,50%), rgba(129,140,248,0.18), transparent 65%);
+  }
+  .contacto:hover { transform: translateY(-5px); border-color: rgba(129,140,248,0.5); box-shadow: 0 18px 46px rgba(0,0,0,0.4); }
+  .contacto:hover::before { opacity: 1; }
+  .contacto .ico {
+    width: 58px; height: 58px; flex-shrink: 0; border-radius: 16px; font-size: 26px;
+    display: flex; align-items: center; justify-content: center; position: relative; z-index: 1;
+    background: rgba(34,211,238,0.1); border: 1px solid rgba(34,211,238,0.25);
+  }
+  .wa .ico { background: rgba(34,197,94,0.12); border-color: rgba(74,222,128,0.35); }
+  .contacto .c-nombre { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: var(--gris); position: relative; z-index: 1; }
+  .contacto .c-valor { font-size: 18px; font-weight: 700; color: #fff; position: relative; z-index: 1; }
+
+  /* ---------- Footer ---------- */
+  footer { position: relative; z-index: 2; text-align: center; padding: 40px 6%; border-top: 1px solid var(--borde); color: var(--gris); font-size: 14px; }
+  footer .frase { font-size: 17px; font-weight: 700; color: var(--texto); margin-bottom: 8px; }
+  footer .frase span { background: linear-gradient(100deg, #67e8f9, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  footer .mini { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; }
+
+  /* ---------- Revelado al hacer scroll ---------- */
+  .reveal { opacity: 0; transform: translateY(40px); transition: opacity .8s cubic-bezier(.16,1,.3,1), transform .8s cubic-bezier(.16,1,.3,1); }
+  .reveal.visible { opacity: 1; transform: none; }
+  .reveal.d1 { transition-delay: .1s; } .reveal.d2 { transition-delay: .2s; }
+  .reveal.d3 { transition-delay: .3s; } .reveal.d4 { transition-delay: .4s; }
+
+  /* ---------- Botón arriba ---------- */
+  #arriba {
+    position: fixed; right: 24px; bottom: 24px; z-index: 90; width: 48px; height: 48px;
+    border-radius: 14px; border: 1px solid rgba(34,211,238,0.4); cursor: pointer;
+    background: rgba(34,211,238,0.12); color: var(--cian); font-size: 20px;
+    opacity: 0; transform: translateY(12px); pointer-events: none; transition: .3s; backdrop-filter: blur(8px);
+  }
+  #arriba.mostrar { opacity: 1; transform: none; pointer-events: auto; }
+  #arriba:hover { background: rgba(34,211,238,0.25); box-shadow: 0 0 24px rgba(34,211,238,0.35); }
+
+  /* ---------- Widget de chat ---------- */
+  #chatBtn {
+    position: fixed; left: 24px; bottom: 24px; z-index: 90;
+    width: 60px; height: 60px; border-radius: 50%; border: none; cursor: pointer;
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    color: #fff; font-size: 27px; display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 8px 28px rgba(34,197,94,0.45);
+    transition: transform .25s, box-shadow .25s;
+    animation: latido 2.2s ease-in-out infinite;
+  }
+  #chatBtn:hover { transform: scale(1.08); box-shadow: 0 12px 36px rgba(34,197,94,0.65); }
+  #chatBtn[data-dot="1"]::before {
+    content: ""; position: absolute; top: -1px; right: -1px; width: 14px; height: 14px;
+    border-radius: 50%; background: #f43f5e; border: 2px solid var(--fondo); animation: pulsar 1.6s infinite;
+  }
+  @keyframes latido {
+    0%,100% { box-shadow: 0 8px 28px rgba(34,197,94,0.45), 0 0 0 0 rgba(34,197,94,0.5); }
+    50% { box-shadow: 0 8px 28px rgba(34,197,94,0.45), 0 0 0 14px rgba(34,197,94,0); }
+  }
+  #chatPanel {
+    position: fixed; left: 24px; bottom: 98px; z-index: 90; width: min(340px, calc(100vw - 48px));
+    background: rgba(10,15,31,0.96); backdrop-filter: blur(16px);
+    border: 1px solid rgba(34,211,238,0.25); border-radius: 20px; overflow: hidden;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.6);
+    transform: translateY(16px) scale(0.95); opacity: 0; pointer-events: none;
+    transition: transform .3s cubic-bezier(.16,1,.3,1), opacity .3s;
+  }
+  #chatPanel.abierto { transform: none; opacity: 1; pointer-events: auto; }
+  .chat-head {
+    display: flex; align-items: center; gap: 12px; padding: 14px 16px;
+    background: linear-gradient(120deg, rgba(34,211,238,0.15), rgba(129,140,248,0.15));
+    border-bottom: 1px solid var(--borde);
+  }
+  .chat-head .avatar {
+    width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0;
+    background: radial-gradient(circle at 30% 30%, #7ff3ff, #22d3ee);
+    display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 800; color: #05222b;
+  }
+  .chat-head .c-n { font-weight: 700; font-size: 15px; }
+  .chat-head .c-r { font-size: 11px; color: #4ade80; display: flex; align-items: center; gap: 5px; }
+  .chat-head .c-r::before { content: "●"; font-size: 8px; }
+  .chat-head .cerrar { margin-left: auto; background: none; border: none; color: var(--gris); font-size: 20px; cursor: pointer; line-height: 1; }
+  .chat-body { padding: 16px; max-height: 300px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+  .burbuja {
+    max-width: 85%; padding: 10px 14px; border-radius: 14px; font-size: 14px; line-height: 1.45;
+  }
+  .burbuja.entrada {
+    align-self: flex-start; background: rgba(255,255,255,0.07); border-bottom-left-radius: 4px; color: var(--texto);
+  }
+  .burbuja.salida {
+    align-self: flex-end; background: linear-gradient(120deg, #22d3ee, #818cf8); color: #05222b; font-weight: 600; border-bottom-right-radius: 4px;
+  }
+  .burbuja.sistema {
+    align-self: center; background: rgba(244,63,94,0.12); border: 1px solid rgba(244,63,94,0.35);
+    color: #fda4af; font-size: 12.5px; text-align: center;
+  }
+  .burbuja.sistema a { color: #a5f3fc; }
+
+  /* ---------- Modo administrador ---------- */
+  .chat-lista { display: flex; flex-direction: column; gap: 8px; }
+  .chat-lista .fila {
+    display: flex; align-items: center; gap: 10px; width: 100%; text-align: left;
+    padding: 11px 12px; border-radius: 12px; border: 1px solid var(--borde);
+    background: rgba(255,255,255,0.04); color: var(--texto); cursor: pointer; transition: background .2s, border-color .2s;
+    font-family: inherit;
+  }
+  .chat-lista .fila:hover, .chat-lista .fila.activo { background: rgba(34,211,238,0.1); border-color: rgba(34,211,238,0.45); }
+  .chat-lista .fila .av { width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0; background: linear-gradient(120deg,#22d3ee,#818cf8); display: flex; align-items: center; justify-content: center; font-weight: 800; color:#05222b; font-size:14px; }
+  .chat-lista .fila .info { flex: 1; min-width: 0; }
+  .chat-lista .fila .f-n { font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 6px; }
+  .chat-lista .fila .f-u { font-size: 12px; color: var(--gris); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .chat-lista .fila .f-n i { font-style: normal; font-size: 9px; color:#4ade80; }
+  .chat-lista .fila .no-leidos {
+    min-width: 20px; height: 20px; padding: 0 6px; border-radius: 12px; background: #f43f5e; color: #fff;
+    font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center;
+  }
+  .chat-lista .lista-vacia { color: var(--gris); font-size: 13px; text-align: center; padding: 18px 0; }
+  .chat-thread { display: none; flex-direction: column; gap: 8px; }
+  .chat-thread .volver {
+    align-self: flex-start; background: none; border: 1px solid var(--borde); color: var(--gris);
+    font-size: 12px; padding: 5px 12px; border-radius: 20px; cursor: pointer; transition: color .2s, border-color .2s;
+  }
+  .chat-thread .volver:hover { color: var(--cian); border-color: rgba(34,211,238,0.4); }
+  #chatMsgs { display: flex; flex-direction: column; gap: 10px; }
+  #chatSaludo { display: none; }
+  .opciones { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 16px 12px; }
+  .opciones button {
+    font-size: 12px; padding: 7px 12px; border-radius: 30px; cursor: pointer;
+    border: 1px solid rgba(34,211,238,0.4); color: #a5f3fc; background: rgba(34,211,238,0.08);
+    transition: background .2s;
+  }
+  .opciones button:hover { background: rgba(34,211,238,0.2); }
+  .chat-input { display: flex; gap: 8px; padding: 12px 16px 16px; border-top: 1px solid var(--borde); }
+  .chat-input input {
+    flex: 1; background: rgba(255,255,255,0.06); border: 1px solid var(--borde); color: var(--texto);
+    border-radius: 12px; padding: 11px 14px; font-size: 14px; outline: none; min-width: 0;
+  }
+  .chat-input input:focus { border-color: rgba(34,211,238,0.6); }
+  .chat-input input::placeholder { color: var(--gris); }
+  .chat-input .enviar {
+    border: none; border-radius: 12px; padding: 0 16px; cursor: pointer; font-size: 16px;
+    background: linear-gradient(120deg, #22d3ee, #818cf8); color: #05222b; font-weight: 700;
+    transition: filter .2s;
+  }
+  .chat-input .enviar:hover { filter: brightness(1.2); }
+  @media (max-width: 720px) { #chatPanel { bottom: 92px; } }
+
+  /* ---------- Responsive ---------- */
+  @media (max-width: 720px) {
+    .links {
+      position: fixed; top: 0; right: 0; height: 100vh; width: 68%;
+      flex-direction: column; align-items: center; justify-content: center; gap: 34px;
+      background: rgba(6,10,20,0.96); backdrop-filter: blur(14px);
+      transform: translateX(100%); transition: transform .4s; border-left: 1px solid var(--borde);
+    }
+    .links.abierto { transform: none; }
+    .links a { font-size: 19px; }
+    .burger { display: flex; }
+    .burger.abierto span:nth-child(1) { transform: translateY(8px) rotate(45deg); }
+    .burger.abierto span:nth-child(2) { opacity: 0; }
+    .burger.abierto span:nth-child(3) { transform: translateY(-8px) rotate(-45deg); }
+    section { padding: 76px 6%; }
+    .marca-agua, .cifra .valor { font-size: 32px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+  }
+</style>
+</head>
+<body>
+<canvas id="particulas"></canvas>
+<div id="aurora"></div>
+
+<nav id="nav">
+  <div class="logo">JD<span>Studios</span></div>
+  <div class="links" id="menu">
+    <a href="#inicio" class="activo">Inicio</a>
+    <a href="#que-hago">¿Qué hago?</a>
+    <a href="#contacto">Contacto</a>
+  </div>
+  <button class="burger" id="burger" aria-label="Menú">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<header id="inicio">
+  <div class="orbita reveal">
+    <div class="nucleo">JD</div>
+    <div class="anillo"></div>
+    <div class="anillo2"></div>
+  </div>
+  <span class="badge reveal d1"><span class="punto"></span>Estudio creativo web</span>
+  <h1 class="reveal d2"><span class="jd">JD</span> <span class="studios">Studios</span></h1>
+  <p class="eslogan reveal d3">Tu idea, hecha web.</p>
+  <p class="maquina reveal d3"><span id="txt"></span><span class="cursor"></span></p>
+  <div class="ctas reveal d4">
+    <a href="#que-hago" class="btn btn-primario">🚀 Ver qué hago</a>
+    <a href="#contacto" class="btn btn-ghost">💬 Hablemos</a>
+  </div>
+  <div class="scroll-ind">
+    <div class="raton"></div>
+    <span>DESLIZA</span>
+  </div>
+</header>
+
+<div class="marquesina">
+  <div class="pista">
+    <span><i>✦</i> Páginas web</span>
+    <span><i>✦</i> Diseño personalizado</span>
+    <span><i>✦</i> Responsive</span>
+    <span><i>✦</i> Negocios</span>
+    <span><i>✦</i> Portafolios</span>
+    <span><i>✦</i> Landing pages</span>
+    <span><i>✦</i> Proyectos desde cero</span>
+    <span><i>✦</i> Creatividad</span>
+    <span><i>✦</i> Páginas web</span>
+    <span><i>✦</i> Diseño personalizado</span>
+    <span><i>✦</i> Responsive</span>
+    <span><i>✦</i> Negocios</span>
+  </div>
+</div>
+
+<section id="que-hago">
+  <div class="cabecera reveal">
+    <span class="etiqueta">Servicios</span>
+    <h2>💻 ¿Qué <span class="grado">hago?</span></h2>
+    <p>En <strong>JD Studios</strong> me especializo en crear páginas web desde cero. Me gusta combinar <strong>programación, diseño y creatividad</strong> para crear sitios que se vean bien, sean fáciles de usar y funcionen correctamente.</p>
+  </div>
+
+  <div class="servicios">
+    <div class="card reveal" data-inclinacion>
+      <span class="num">01</span>
+      <div class="icono">🌐</div>
+      <h3>Páginas web</h3>
+      <p>Sitios completos creados desde cero, listos para tu proyecto.</p>
+    </div>
+    <div class="card reveal d1" data-inclinacion>
+      <span class="num">02</span>
+      <div class="icono">🎨</div>
+      <h3>Diseños web personalizados</h3>
+      <p>Un diseño único, hecho a la medida de lo que necesitas.</p>
+    </div>
+    <div class="card reveal d2" data-inclinacion>
+      <span class="num">03</span>
+      <div class="icono">📱</div>
+      <h3>Adaptadas a celulares y PC</h3>
+      <p>Páginas que se ven y funcionan bien en cualquier pantalla.</p>
+    </div>
+    <div class="card reveal" data-inclinacion>
+      <span class="num">04</span>
+      <div class="icono">🏢</div>
+      <h3>Páginas para negocios</h3>
+      <p>Presencia profesional para empresas, locales y emprendimientos.</p>
+    </div>
+    <div class="card reveal d1" data-inclinacion>
+      <span class="num">05</span>
+      <div class="icono">👤</div>
+      <h3>Portafolios personales</h3>
+      <p>Muestra tu trabajo y tus habilidades de forma profesional.</p>
+    </div>
+    <div class="card reveal d2" data-inclinacion>
+      <span class="num">06</span>
+      <div class="icono">🚀</div>
+      <h3>Landing pages</h3>
+      <p>Páginas enfocadas en presentar una idea o producto con impacto.</p>
+    </div>
+    <div class="card reveal" data-inclinacion>
+      <span class="num">07</span>
+      <div class="icono">💻</div>
+      <h3>Proyectos personales</h3>
+      <p>Lleva tu idea, hobby o proyecto personal a la web.</p>
+    </div>
+  </div>
+
+  <div class="cifras">
+    <div class="cifra reveal"><div class="valor" data-contar="100">0</div><div class="label">Creatividad</div></div>
+    <div class="cifra reveal d1"><div class="valor" data-contar="24">0</div><div class="label">/7 disponible</div></div>
+    <div class="cifra reveal d2"><div class="valor" data-contar="100">0</div><div class="label">Responsive</div></div>
+    </div>
+
+  <div class="llamado reveal">
+    <h3>¿Tienes una <span class="grado">idea?</span></h3>
+    <p>Cuéntame qué necesitas y podemos convertirla en una página web. Hablemos sin compromiso.</p>
+    <a href="https://wa.me/573228825610" target="_blank" rel="noopener" class="btn btn-primario">✍️ Empezar mi proyecto</a>
+  </div>
+</section>
+
+<section id="contacto">
+  <div class="cabecera reveal">
+    <span class="etiqueta">Contacto</span>
+    <h2>Hablemos de tu <span class="grado">proyecto</span></h2>
+    <p>Elige tu canal favorito y escribeme. Respondo lo antes posible.</p>
+  </div>
+  <div class="contacto-grid">
+    <a class="contacto wa reveal" href="https://wa.me/573228825610" target="_blank" rel="noopener" data-inclinacion>
+      <div class="ico">💬</div>
+      <div>
+        <div class="c-nombre">WhatsApp</div>
+        <div class="c-valor">+57 322 882 5610</div>
+      </div>
+    </a>
+    <a class="contacto reveal d1" href="mailto:prubsjus@gmail.com" data-inclinacion>
+      <div class="ico">📧</div>
+      <div>
+        <div class="c-nombre">Correo</div>
+        <div class="c-valor">prubsjus@gmail.com</div>
+      </div>
+    </a>
+  </div>
+</section>
+
+<footer>
+  <div class="frase reveal">JD Studios — <span>Tu idea, hecha web.</span></div>
+  <div class="mini">Creado desde cero con programación, diseño y creatividad</div>
+</footer>
+
+<button id="chatBtn" aria-label="Abrir chat">💬</button>
+
+<div id="chatPanel">
+  <div class="chat-head">
+    <div class="avatar">JD</div>
+    <div>
+      <div class="c-n" id="chatTitulo">JD Studios</div>
+      <div class="c-r" id="chatEstado">Conectando…</div>
+    </div>
+    <button class="cerrar" id="chatCerrar" aria-label="Cerrar chat">✕</button>
+  </div>
+  <div class="chat-body">
+    <div id="chatLista" class="chat-lista" style="display:none"></div>
+    <div id="chatThread" class="chat-thread">
+      <button id="chatVolver" class="volver">← Conversaciones</button>
+      <div id="chatMsgs"></div>
+    </div>
+    <div id="chatSaludo" class="burbuja entrada">👋 ¡Hola! Soy <strong>JD</strong>. ¿Tienes una idea y quieres convertirla en una página web?</div>
+  </div>
+  <div class="opciones" id="chatOpciones">
+    <button data-opcion="Quiero una página para mi negocio">🏢 Para mi negocio</button>
+    <button data-opcion="Quiero un portafolio personal">👤 Portafolio</button>
+    <button data-opcion="Quiero una landing page">🚀 Landing page</button>
+  </div>
+  <div class="chat-input">
+    <input id="chatMsg" type="text" placeholder="Escribe tu mensaje..." maxlength="500">
+    <button class="enviar" id="chatEnviar">✈️</button>
+  </div>
+</div>
+
+<button id="arriba" aria-label="Subir">↑</button>
+
+<script>
+(() => {
+  /* ---------- Partículas ---------- */
+  const cv = document.getElementById('particulas'), cx = cv.getContext('2d');
+  let W, H, ps = [];
+  function tam() { W = cv.width = innerWidth; H = cv.height = innerHeight; }
+  tam(); addEventListener('resize', tam);
+  const N = Math.min(90, Math.floor(innerWidth / 18));
+  for (let i = 0; i < N; i++) ps.push({ x: Math.random(), y: Math.random(), r: Math.random() * 1.8 + 0.4, vx: (Math.random() - 0.5) * 0.0004, vy: (Math.random() - 0.5) * 0.0004, c: Math.random() < 0.5 ? '34,211,238' : '129,140,248' });
+  (function dibuja() {
+    cx.clearRect(0, 0, W, H);
+    for (const p of ps) {
+      p.x += p.vx; p.y += p.vy;
+      if (p.x < 0 || p.x > 1) p.vx *= -1;
+      if (p.y < 0 || p.y > 1) p.vy *= -1;
+      cx.beginPath(); cx.arc(p.x * W, p.y * H, p.r, 0, 7); cx.fillStyle = 'rgba(' + p.c + ',0.5)'; cx.fill();
+    }
+    for (let i = 0; i < ps.length; i++) for (let j = i + 1; j < ps.length; j++) {
+      const a = ps[i], b = ps[j], d = Math.hypot((a.x - b.x) * W, (a.y - b.y) * H);
+      if (d < 110) { cx.beginPath(); cx.moveTo(a.x * W, a.y * H); cx.lineTo(b.x * W, b.y * H); cx.strokeStyle = 'rgba(103,232,249,' + (0.14 * (1 - d / 110)) + ')'; cx.lineWidth = 1; cx.stroke(); }
+    }
+    requestAnimationFrame(dibuja);
+  })();
+
+  /* ---------- Efecto máquina de escribir ---------- */
+  const frases = ['Páginas web desde cero', 'Diseños personalizados', 'Adaptadas a celular y PC', 'Web para tu negocio', 'Landing pages con impacto'];
+  const el = document.getElementById('txt'); let f = 0, char = 0, borrando = false;
+  (function teclear() {
+    const actual = frases[f];
+    el.textContent = actual.slice(0, char);
+    if (!borrando) {
+      char++;
+      if (char > actual.length) { borrando = true; setTimeout(teclear, 1900); return; }
+      setTimeout(teclear, 60);
+    } else {
+      char--;
+      if (char <= 0) { borrando = false; f = (f + 1) % frases.length; setTimeout(teclear, 350); return; }
+      setTimeout(teclear, 28);
+    }
+  })();
+
+  /* ---------- Navbar compacta + spy scrol ---------- */
+  const nav = document.getElementById('nav'), menu = document.getElementById('menu');
+  const secciones = [...document.querySelectorAll('section, header')];
+  addEventListener('scroll', () => {
+    nav.classList.toggle('compact', scrollY > 40);
+    document.getElementById('arriba').classList.toggle('mostrar', scrollY > 600);
+    let actual = secciones[0];
+    for (const s of secciones) if (s.offsetTop - 140 <= scrollY) actual = s;
+    for (const a of menu.querySelectorAll('a')) a.classList.toggle('activo', '#' + actual.id === a.getAttribute('href'));
+  }, { passive: true });
+  document.getElementById('arriba').onclick = () => scrollTo({ top: 0, behavior: 'smooth' });
+
+  /* ---------- Menú móvil ---------- */
+  const burger = document.getElementById('burger');
+  burger.addEventListener('click', () => { burger.classList.toggle('abierto'); menu.classList.toggle('abierto'); });
+  menu.querySelectorAll('a').forEach(a => a.addEventListener('click', () => { burger.classList.remove('abierto'); menu.classList.remove('abierto'); }));
+
+  /* ---------- Revelado al hacer scroll ---------- */
+  const obs = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); } }), { threshold: 0.14 });
+  document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+  /* ---------- Contadores ---------- */
+  const contObs = new IntersectionObserver(es => es.forEach(e => {
+    if (!e.isIntersecting) return;
+    const el = e.target, meta = +el.dataset.contar; contObs.unobserve(el);
+    let n = 0; const paso = Math.max(1, Math.round(meta / 55));
+    (function sube() { n = Math.min(meta, n + paso); el.textContent = n + (meta > 99 ? '%' : ''); if (n < meta) requestAnimationFrame(sube); })();
+  }), { threshold: 0.6 });
+  document.querySelectorAll('[data-contar]').forEach(el => contObs.observe(el));
+
+  /* ---------- Inclinación 3D de tarjetas ---------- */
+  if (matchMedia('(hover:hover)').matches) {
+    document.querySelectorAll('[data-inclinacion]').forEach(card => {
+      card.addEventListener('mousemove', ev => {
+        const r = card.getBoundingClientRect();
+        const rx = ((ev.clientY - r.top) / r.height - 0.5) * -10;
+        const ry = ((ev.clientX - r.left) / r.width - 0.5) * 12;
+        card.style.transform = 'perspective(900px) rotateX(' + rx + 'deg) rotateY(' + ry + 'deg) translateY(-4px)';
+        card.style.setProperty('--mx', (ev.clientX - r.left) + 'px');
+        card.style.setProperty('--my', (ev.clientY - r.top) + 'px');
+      });
+      card.addEventListener('mouseleave', () => { card.style.transform = ''; });
+    });
+  }
+
+  /* ---------- Widget de chat (tiempo real WebSocket) ---------- */
+  const NUM_WHATSAPP = '573228825610';
+  const CLAVE_ADMIN = 'jdstudios2024';
+  const esAdmin = !!(new URLSearchParams(location.search).get('admin'));
+
+  const chatBtn = document.getElementById('chatBtn'), chatPanel = document.getElementById('chatPanel');
+  const chatMsg = document.getElementById('chatMsg'), chatCerrar = document.getElementById('chatCerrar');
+  const chatBody = document.querySelector('.chat-body'), chatEnviar = document.getElementById('chatEnviar');
+  const chatTitulo = document.getElementById('chatTitulo'), chatEstado = document.getElementById('chatEstado');
+  const chatLista = document.getElementById('chatLista'), chatThread = document.getElementById('chatThread');
+  const chatMsgs = document.getElementById('chatMsgs'), chatSaludo = document.getElementById('chatSaludo');
+  const chatOpciones = document.getElementById('chatOpciones'), chatVolver = document.getElementById('chatVolver');
+  const chatInputFila = document.querySelector('.chat-input');
+
+  const hilos = {};     // admin: id -> {nombre, msgs:[], noLeidos}
+  let mid = null, hiloActivo = null, ws = null, fallo = false;
+
+  function esc(v) { const d = document.createElement('div'); d.textContent = v; return d.innerHTML; }
+  function creaBurbuja(msj) {
+    const el = document.createElement('div');
+    el.className = 'burbuja ' + (msj.de === 'yo' ? 'salida' : 'entrada');
+    const etiqueta = msj.de === 'tu' ? 'Cliente' : (msj.de === 'jd' ? 'JD Studios' : '');
+    el.innerHTML = (etiqueta ? '<i style="font-size:11px;color:var(--gris);font-style:normal;">' + etiqueta + '</i><br>' : '') + esc(msj.m) + '<br><span style="font-size:10px;opacity:.65">' + (msj.h || '') + '</span>';
+    return el;
+  }
+
+  function setEstado(kind) {
+    if (kind === 'conectado') {
+      chatEstado.textContent = esAdmin ? '● Escuchando mensajes' : '● En línea · responde rápido';
+      chatEstado.style.color = '#4ade80';
+    } else if (kind === 'apagado') {
+      chatEstado.textContent = '● Sin servidor';
+      chatEstado.style.color = '#fda4af';
+      chatSaludo.style.display = '';
+      chatSaludo.classList.remove('entrada');
+      chatSaludo.className = 'burbuja sistema';
+      chatSaludo.innerHTML = '⚠️ El chat no está disponible ahora mismo.<br>Escríbeme por <a href="https://wa.me/' + NUM_WHATSAPP + '" target="_blank" rel="noopener">WhatsApp</a> y te respondo: <b>+57 322 882 5610</b>';
+      chatOpciones.style.display = 'none';
+      chatInputFila.style.display = 'none';
+    }
+  }
+
+  function conecta() {
+    const proto = (location.protocol === 'https:') ? 'wss://' : 'ws://';
+    try { ws = new WebSocket(proto + location.host + '/ws'); }
+    catch (e) { setEstado('apagado'); return; }
+    ws.onopen = () => {
+      setEstado('conectado');
+      if (esAdmin) ws.send(JSON.stringify({ t: 'hello', clave: CLAVE_ADMIN }));
+    };
+    ws.onmessage = ev => { try { manejar(JSON.parse(ev.data)); } catch (e) {} };
+    ws.onclose = () => { if (!fallo) setEstado('apagado'); };
+    ws.onerror = () => { fallo = true; setEstado('apagado'); };
+  }
+
+  function manejar(m) {
+    if (m.t === 'hola') { mid = m.id; return; }
+    if (m.t === 'clave_mala') { adminClaveMala(); return; }
+    if (m.t === 'listo') { adminListo(m); return; }
+    if (m.t === 'respuesta') {
+      if (esAdmin) { addMsjHilo(m.id, { de: 'yo', m: m.m, h: m.h }); if (m.id === hiloActivo) renderHilo(); renderChats(); }
+      else { chatSaludo.style.display = 'none'; chatBody.appendChild(creaBurbuja({ de: 'jd', m: m.m, h: m.h })); chatBody.scrollTop = chatBody.scrollHeight; }
+      return;
+    }
+    if (m.t === 'sinc') { addMsjHilo(m.id, { de: 'yo', m: m.m, h: m.h }); if (m.id === hiloActivo) renderHilo(); renderChats(); return; }
+    if (m.t === 'entrante') {
+      if (!hilos[m.id]) hilos[m.id] = { nombre: m.nombre || 'Visitante', msgs: [], noLeidos: 0 };
+      hilos[m.id].msgs.push({ de: 'tu', m: m.m, h: m.h });
+      if (m.id !== hiloActivo || document.hidden) hilos[m.id].noLeidos++;
+      renderChats();
+      if (m.id === hiloActivo && !document.hidden) renderHilo();
+      avisar(m.nombre || 'Visitante', m.m);
+      return;
+    }
+    if (m.t === 'entra' || m.t === 'sale') { if (esAdmin) renderChats(); return; }
+    if (m.t === 'presencia') { if (esAdmin) { chatEstado.textContent = '● ' + m.total + ' conversación(es) activa(s)'; } return; }
+  }
+
+  /* ---- Lógica visitante ---- */
+  function chatSaliente(texto) {
+    const t = (texto || '').trim();
+    if (!t) return;
+    const el = document.createElement('div');
+    el.className = 'burbuja salida'; el.textContent = t;
+    chatSaludo.style.display = 'none';
+    chatBody.appendChild(el); chatBody.scrollTop = chatBody.scrollHeight;
+    chatMsg.value = '';
+    if (ws && ws.readyState === 1) ws.send(JSON.stringify({ t: 'chat', m: t }));
+    else window.open('https://wa.me/' + NUM_WHATSAPP + '?text=' + encodeURIComponent('¡Hola, JD Studios! ' + t), '_blank');
+  }
+
+  /* ---- Lógica administrador ---- */
+  function adminListo(m) {
+    chatTitulo.textContent = 'Panel de JD Studios';
+    document.title = 'Admin · JD Studios';
+    chatSaludo.style.display = 'none';
+    chatOpciones.style.display = 'none';
+    chatLista.style.display = '';
+    for (const c of m.chats || []) {
+      const hist = (m.hist && m.hist[c.id]) || [];
+      hilos[c.id] = { nombre: c.nombre || 'Visitante', msgs: hist.slice(), noLeidos: 0 };
+    }
+    renderChats();
+  }
+  function adminClaveMala() {
+    chatTitulo.textContent = 'Acceso denegado';
+    chatSaludo.style.display = '';
+    chatSaludo.className = 'burbuja sistema';
+    chatSaludo.textContent = 'Clave de administración incorrecta.';
+    chatOpciones.style.display = 'none';
+    chatInputFila.style.display = 'none';
+  }
+  function addMsjHilo(id, msj) {
+    if (!hilos[id]) hilos[id] = { nombre: 'Visitante', msgs: [], noLeidos: 0 };
+    hilos[id].msgs.push(msj);
+  }
+  function renderChats() {
+    if (!esAdmin) return;
+    chatLista.innerHTML = '';
+    const ids = Object.keys(hilos);
+    if (!ids.length) {
+      const v = document.createElement('div');
+      v.className = 'lista-vacia';
+      v.textContent = 'Aún no hay mensajes. Cuando un cliente escriba, aparecerá aquí.';
+      chatLista.appendChild(v);
+    }
+    for (const id of Object.keys(hilos).sort()) {
+      const h = hilos[id], ultimo = h.msgs.length ? h.msgs[h.msgs.length - 1].m : 'Sin mensajes';
+      const f = document.createElement('button');
+      f.className = 'fila' + (id === hiloActivo ? ' activo' : '');
+      f.innerHTML = '<span class="av">👤</span><span class="info"><span class="f-n">' + esc(h.nombre) + ' <i>●</i></span><span class="f-u">' + esc(ultimo) + '</span></span>' +
+        (h.noLeidos ? '<span class="no-leidos">' + h.noLeidos + '</span>' : '');
+      f.onclick = () => abrirHilo(id);
+      chatLista.appendChild(f);
+    }
+  }
+  function abrirHilo(id) {
+    hiloActivo = id;
+    hilos[id].noLeidos = 0;
+    chatLista.style.display = 'none';
+    chatThread.style.display = 'flex';
+    chatInputFila.style.display = 'flex';
+    renderHilo();
+    renderChats();
+  }
+  function renderHilo() {
+    if (!hiloActivo || !hilos[hiloActivo]) return;
+    chatMsgs.innerHTML = '';
+    const h = hilos[hiloActivo];
+    for (const msj of h.msgs) chatMsgs.appendChild(creaBurbuja(msj));
+    chatMsgs.scrollTop = chatMsgs.scrollHeight;
+  }
+  function respuestaSaliente() {
+    const t = (chatMsg.value || '').trim();
+    if (!t || !hiloActivo) return;
+    hilos[hiloActivo].msgs.push({ de: 'yo', m: t, h: new Date().toTimeString().slice(0, 5) });
+    renderHilo();
+    chatMsg.value = '';
+    if (ws && ws.readyState === 1) ws.send(JSON.stringify({ t: 'respuesta', id: hiloActivo, m: t }));
+  }
+  chatVolver.addEventListener('click', () => {
+    hiloActivo = null;
+    chatThread.style.display = 'none';
+    chatLista.style.display = '';
+    chatInputFila.style.display = 'none';
+  });
+
+  function avisar(nombre, texto) {
+    if (!esAdmin) return;
+    try { playBeep(); } catch (e) {}
+    if (document.hidden && 'Notification' in window && Notification.permission === 'granted') {
+      new Notification('JD Studios · ' + nombre, { body: texto });
+    }
+  }
+  function playBeep() {
+    const actx = new (window.AudioContext || window.webkitAudioContext)();
+    const o = actx.createOscillator(), g = actx.createGain();
+    o.connect(g); g.connect(actx.destination);
+    o.frequency.value = 880; g.gain.value = 0.08;
+    o.start(); o.stop(actx.currentTime + 0.25);
+  }
+
+  /* ---- Abrir / cerrar panel ---- */
+  chatBtn.addEventListener('click', () => {
+    chatPanel.classList.toggle('abierto');
+    if (chatPanel.classList.contains('abierto')) { chatBtn.removeAttribute('data-dot'); chatMsg.focus(); }
+  });
+  chatCerrar.addEventListener('click', () => chatPanel.classList.remove('abierto'));
+  document.addEventListener('click', e => {
+    if (!chatPanel.contains(e.target) && !chatBtn.contains(e.target)) chatPanel.classList.remove('abierto');
+  });
+
+  /* ---- Enviar ---- */
+  chatEnviar.addEventListener('click', () => esAdmin ? respuestaSaliente() : chatSaliente(chatMsg.value));
+  chatMsg.addEventListener('keydown', e => { if (e.key === 'Enter') { esAdmin ? respuestaSaliente() : chatSaliente(chatMsg.value); } });
+  document.querySelectorAll('.opciones button').forEach(b => {
+    b.addEventListener('click', () => chatSaliente(b.getAttribute('data-opcion')));
+  });
+
+  /* ---- Autoapertura + aviso en admin ---- */
+  if (esAdmin && 'Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
+  }
+  if (!sessionStorage.getItem('jd_chat_visto')) {
+    sessionStorage.setItem('jd_chat_visto', '1');
+    setTimeout(() => {
+      chatBtn.setAttribute('data-dot', '1');
+      setTimeout(() => { chatPanel.classList.add('abierto'); }, 900);
+    }, 2500);
+  }
+
+  conecta();
+})();
+</script>
+</body>
+</html>
