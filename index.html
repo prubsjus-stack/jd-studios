@@ -670,10 +670,13 @@
     });
   }
 
-  /* ---------- Widget de chat (tiempo real WebSocket) ---------- */
+  /* ---------- Widget de chat (MQTT en vivo, funciona en GitHub Pages) ---------- */
   const NUM_WHATSAPP = '573228825610';
   const CLAVE_ADMIN = 'jdstudios2024';
-  const esAdmin = !!(new URLSearchParams(location.search).get('admin'));
+  const esAdmin = new URLSearchParams(location.search).get('admin') === CLAVE_ADMIN;
+  const BASE = 'jdstudios/rmt8h3q';
+  const SEG = Math.random().toString(36).slice(2, 6);
+  const visId = 'v' + SEG;
 
   const chatBtn = document.getElementById('chatBtn'), chatPanel = document.getElementById('chatPanel');
   const chatMsg = document.getElementById('chatMsg'), chatCerrar = document.getElementById('chatCerrar');
@@ -685,9 +688,11 @@
   const chatInputFila = document.querySelector('.chat-input');
 
   const hilos = {};     // admin: id -> {nombre, msgs:[], noLeidos}
-  let mid = null, hiloActivo = null, ws = null, fallo = false;
+  let hiloActivo = null, mqtt = null;
+  let visTopIn = BASE + '/' + visId + '/in', visTopOut = BASE + '/' + visId + '/out';
 
   function esc(v) { const d = document.createElement('div'); d.textContent = v; return d.innerHTML; }
+  function hora() { return new Date().toTimeString().slice(0, 5); }
   function creaBurbuja(msj) {
     const el = document.createElement('div');
     el.className = 'burbuja ' + (msj.de === 'yo' ? 'salida' : 'entrada');
@@ -698,10 +703,10 @@
 
   function setEstado(kind) {
     if (kind === 'conectado') {
-      chatEstado.textContent = esAdmin ? '● Escuchando mensajes' : '● En línea · responde rápido';
+      chatEstado.textContent = esAdmin ? '● Recibiendo en vivo' : '● En línea · responde rápido';
       chatEstado.style.color = '#4ade80';
     } else if (kind === 'apagado') {
-      chatEstado.textContent = '● Sin servidor';
+      chatEstado.textContent = '● Sin conexión';
       chatEstado.style.color = '#fda4af';
       chatSaludo.style.display = '';
       chatSaludo.classList.remove('entrada');
@@ -713,39 +718,61 @@
   }
 
   function conecta() {
-    const proto = (location.protocol === 'https:') ? 'wss://' : 'ws://';
-    try { ws = new WebSocket(proto + location.host + '/ws'); }
-    catch (e) { setEstado('apagado'); return; }
-    ws.onopen = () => {
-      setEstado('conectado');
-      if (esAdmin) ws.send(JSON.stringify({ t: 'hello', clave: CLAVE_ADMIN }));
-    };
-    ws.onmessage = ev => { try { manejar(JSON.parse(ev.data)); } catch (e) {} };
-    ws.onclose = () => { if (!fallo) setEstado('apagado'); };
-    ws.onerror = () => { fallo = true; setEstado('apagado'); };
+    mqtt = new Paho.MQTT.Client('broker.emqx.io', 8084, (esAdmin ? 'jdadmin' : 'jdvis') + '-' + SEG);
+    mqtt.onConnectionLost = () => { setEstado('apagado'); };
+    mqtt.onMessageArrived = manejarMqtt;
+    mqtt.connect({
+      useSSL: true, timeout: 10, keepAliveInterval: 30, cleanSession: true, reconnect: true,
+      onSuccess: () => {
+        setEstado('conectado');
+        if (esAdmin) {
+          mqtt.subscribe(BASE + '/+/in', { qos: 0 });
+          mqtt.subscribe(BASE + '/+/out', { qos: 0 });
+          chatTitulo.textContent = 'Panel de JD Studios';
+          document.title = 'Admin · JD Studios';
+          chatSaludo.style.display = 'none';
+          chatOpciones.style.display = 'none';
+          chatLista.style.display = '';
+          renderChats();
+        } else {
+          mqtt.subscribe(visTopOut, { qos: 0 });
+        }
+      },
+      onFailure: () => setEstado('apagado')
+    });
   }
 
-  function manejar(m) {
-    if (m.t === 'hola') { mid = m.id; return; }
-    if (m.t === 'clave_mala') { adminClaveMala(); return; }
-    if (m.t === 'listo') { adminListo(m); return; }
-    if (m.t === 'respuesta') {
-      if (esAdmin) { addMsjHilo(m.id, { de: 'yo', m: m.m, h: m.h }); if (m.id === hiloActivo) renderHilo(); renderChats(); }
-      else { chatSaludo.style.display = 'none'; chatBody.appendChild(creaBurbuja({ de: 'jd', m: m.m, h: m.h })); chatBody.scrollTop = chatBody.scrollHeight; }
+  function manejarMqtt(evt) {
+    let datos;
+    try { datos = JSON.parse(evt.payloadString); } catch (e) { return; }
+    const partes = evt.destinationName.split('/');
+    const idV = partes[partes.length - 2];
+    const lado = partes[partes.length - 1];
+
+    if (!esAdmin) {
+      if (lado === 'out' && datos.c === 'resp') {
+        chatSaludo.style.display = 'none';
+        chatBody.appendChild(creaBurbuja({ de: 'jd', m: datos.m, h: datos.h }));
+        chatBody.scrollTop = chatBody.scrollHeight;
+      }
       return;
     }
-    if (m.t === 'sinc') { addMsjHilo(m.id, { de: 'yo', m: m.m, h: m.h }); if (m.id === hiloActivo) renderHilo(); renderChats(); return; }
-    if (m.t === 'entrante') {
-      if (!hilos[m.id]) hilos[m.id] = { nombre: m.nombre || 'Visitante', msgs: [], noLeidos: 0 };
-      hilos[m.id].msgs.push({ de: 'tu', m: m.m, h: m.h });
-      if (m.id !== hiloActivo || document.hidden) hilos[m.id].noLeidos++;
+
+    if (!hilos[idV]) hilos[idV] = { nombre: 'Visitante ' + idV.slice(1, 4).toUpperCase(), msgs: [], noLeidos: 0 };
+    const h = hilos[idV];
+    if (lado === 'in') {
+      h.msgs.push({ de: 'tu', m: datos.m, h: datos.h || '' });
+      if (idV !== hiloActivo || document.hidden) h.noLeidos++;
       renderChats();
-      if (m.id === hiloActivo && !document.hidden) renderHilo();
-      avisar(m.nombre || 'Visitante', m.m);
-      return;
+      if (idV === hiloActivo && !document.hidden) renderHilo();
+      avisar(h.nombre, datos.m);
+    } else if (lado === 'out') {
+      const ultimo = h.msgs[h.msgs.length - 1];
+      if (ultimo && ultimo.de === 'yo' && ultimo.m === datos.m && ultimo.h === datos.h) return; // eco propio
+      h.msgs.push({ de: 'yo', m: datos.m, h: datos.h || '' });
+      renderChats();
+      if (idV === hiloActivo) renderHilo();
     }
-    if (m.t === 'entra' || m.t === 'sale') { if (esAdmin) renderChats(); return; }
-    if (m.t === 'presencia') { if (esAdmin) { chatEstado.textContent = '● ' + m.total + ' conversación(es) activa(s)'; } return; }
   }
 
   /* ---- Lógica visitante ---- */
@@ -757,35 +784,11 @@
     chatSaludo.style.display = 'none';
     chatBody.appendChild(el); chatBody.scrollTop = chatBody.scrollHeight;
     chatMsg.value = '';
-    if (ws && ws.readyState === 1) ws.send(JSON.stringify({ t: 'chat', m: t }));
+    if (mqtt) mqtt.publish(visTopIn, JSON.stringify({ c: 'msg', m: t, h: hora() }), 0, true);
     else window.open('https://wa.me/' + NUM_WHATSAPP + '?text=' + encodeURIComponent('¡Hola, JD Studios! ' + t), '_blank');
   }
 
   /* ---- Lógica administrador ---- */
-  function adminListo(m) {
-    chatTitulo.textContent = 'Panel de JD Studios';
-    document.title = 'Admin · JD Studios';
-    chatSaludo.style.display = 'none';
-    chatOpciones.style.display = 'none';
-    chatLista.style.display = '';
-    for (const c of m.chats || []) {
-      const hist = (m.hist && m.hist[c.id]) || [];
-      hilos[c.id] = { nombre: c.nombre || 'Visitante', msgs: hist.slice(), noLeidos: 0 };
-    }
-    renderChats();
-  }
-  function adminClaveMala() {
-    chatTitulo.textContent = 'Acceso denegado';
-    chatSaludo.style.display = '';
-    chatSaludo.className = 'burbuja sistema';
-    chatSaludo.textContent = 'Clave de administración incorrecta.';
-    chatOpciones.style.display = 'none';
-    chatInputFila.style.display = 'none';
-  }
-  function addMsjHilo(id, msj) {
-    if (!hilos[id]) hilos[id] = { nombre: 'Visitante', msgs: [], noLeidos: 0 };
-    hilos[id].msgs.push(msj);
-  }
   function renderChats() {
     if (!esAdmin) return;
     chatLista.innerHTML = '';
@@ -825,10 +828,11 @@
   function respuestaSaliente() {
     const t = (chatMsg.value || '').trim();
     if (!t || !hiloActivo) return;
-    hilos[hiloActivo].msgs.push({ de: 'yo', m: t, h: new Date().toTimeString().slice(0, 5) });
+    const m = hora();
+    hilos[hiloActivo].msgs.push({ de: 'yo', m: t, h: m });
     renderHilo();
     chatMsg.value = '';
-    if (ws && ws.readyState === 1) ws.send(JSON.stringify({ t: 'respuesta', id: hiloActivo, m: t }));
+    if (mqtt) mqtt.publish(BASE + '/' + hiloActivo + '/out', JSON.stringify({ c: 'resp', m: t, h: m }), 0, true);
   }
   chatVolver.addEventListener('click', () => {
     hiloActivo = null;
@@ -881,7 +885,22 @@
     }, 2500);
   }
 
-  conecta();
+  /* ---- Cargar librería MQTT (CDN) y conectar ---- */
+  function iniciar() {
+    if (window.Paho) { conecta(); return; }
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.1.0/paho-mqtt.min.js';
+    s.onload = conecta;
+    s.onerror = () => {
+      const s2 = document.createElement('script');
+      s2.src = 'https://unpkg.com/paho-mqtt@1.1.0/paho-mqtt.min.js';
+      s2.onload = conecta;
+      s2.onerror = () => setEstado('apagado');
+      document.head.appendChild(s2);
+    };
+    document.head.appendChild(s);
+  }
+  iniciar();
 })();
 </script>
 </body>
