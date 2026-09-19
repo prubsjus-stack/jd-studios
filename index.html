@@ -907,7 +907,7 @@
       visPush(bien); chatBody.appendChild(creaBurbuja(bien));
       chatBody.scrollTop = chatBody.scrollHeight;
       chatMsg.value = '';
-      if (conectado && mqtt) mqtt.publish(visTopIn, JSON.stringify({ c: 'nom', m: visNombre, h: hora(), n: visNombre }), 0, true);
+      if (conectado && mqtt) mqtt.send(visTopIn, JSON.stringify({ c: 'nom', m: visNombre, h: hora(), n: visNombre }), 0, true);
       return;
     }
 
@@ -917,7 +917,7 @@
     chatBody.appendChild(creaBurbuja(msj));
     chatBody.scrollTop = chatBody.scrollHeight;
     chatMsg.value = '';
-    if (conectado && mqtt) mqtt.publish(visTopIn, JSON.stringify({ c: 'msg', m: t, h: hora(), n: visNombre }), 0, true);
+    if (conectado && mqtt) mqtt.send(visTopIn, JSON.stringify({ c: 'msg', m: t, h: hora(), n: visNombre }), 0, true);
     else window.open('https://wa.me/' + NUM_WHATSAPP + '?text=' + encodeURIComponent('¡Hola, JD Studios! ' + t), '_blank');
   }
 
@@ -974,7 +974,7 @@
     adGuardar();
     renderHilo();
     chatMsg.value = '';
-    if (conectado && mqtt) mqtt.publish(BASE + '/' + hiloActivo + '/out', JSON.stringify({ c: 'resp', m: t, h: m }), 0, true);
+    if (conectado && mqtt) mqtt.send(BASE + '/' + hiloActivo + '/out', JSON.stringify({ c: 'resp', m: t, h: m }), 0, true);
   }
   chatVolver.addEventListener('click', () => {
     hiloActivo = null;
@@ -1022,7 +1022,7 @@
     const ahora = Date.now();
     if (ahora - ultTyp < 2500) return;
     ultTyp = ahora;
-    mqtt.publish(BASE + '/' + visId + '/typ', JSON.stringify({ c: 'typ' }), 0, false);
+    mqtt.send(BASE + '/' + visId + '/typ', JSON.stringify({ c: 'typ' }), 0, false);
   });
 
   /* ---- Exportar conversaciones (admin) ---- */
