@@ -727,7 +727,7 @@
   const SEG = Math.random().toString(36).slice(2, 6);
 
   /* ---- Persistencia (localStorage) ---- */
-  const LS = { visId: 'jd_vis_id', visNom: 'jd_vis_nombre', visHist: 'jd_vis_hist', adHilos: 'jd_admin_hilos' };
+  const LS = { visId: 'jd_vis_id', visNom: 'jd_vis_nombre', visHist: 'jd_vis_hist', adHilos: 'jd_admin_hilos', adNum: 'jd_admin_num' };
   function lsLeer(k, def) { try { const v = localStorage.getItem(k); return v === null ? def : JSON.parse(v); } catch (e) { return def; } }
   function lsCrudo(k, def) { try { const v = localStorage.getItem(k); return v === null ? def : v; } catch (e) { return def; } }
   function lsGuardar(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
@@ -763,12 +763,22 @@
   function adGuardar() {
     if (!esAdmin) return;
     const copia = {};
-    for (const id in hilos) copia[id] = { nombre: hilos[id].nombre, msgs: hilos[id].msgs.slice(-300) };
+    for (const id in hilos) copia[id] = { num: hilos[id].num, real: hilos[id].real || '', msgs: hilos[id].msgs.slice(-300) };
     lsGuardar(LS.adHilos, copia);
+    lsGuardar(LS.adNum, numCliente);
   }
 
-  let hilos = esAdmin ? lsLeer(LS.adHilos, {}) : {};   // admin: id -> {nombre, msgs:[], noLeidos, typing}
-  for (const id in hilos) { hilos[id].noLeidos = 0; hilos[id].typing = 0; if (!Array.isArray(hilos[id].msgs)) hilos[id].msgs = []; }
+  let hilos = esAdmin ? lsLeer(LS.adHilos, {}) : {};   // admin: id -> {num, real, msgs:[], noLeidos, typing}
+  let numCliente = esAdmin ? (parseInt(lsLeer(LS.adNum, 0), 10) || 0) : 0;
+  for (const id in hilos) {
+    const h = hilos[id];
+    h.noLeidos = 0; h.typing = 0;
+    if (!Array.isArray(h.msgs)) h.msgs = [];
+    if (h.real === undefined) h.real = (h.nombre && !/^Visitante /.test(h.nombre)) ? h.nombre : '';
+    if (!h.num) h.num = ++numCliente;
+    else if (h.num > numCliente) numCliente = h.num;
+  }
+  function nombreCliente(h) { return 'Cliente ' + (h.num || '?') + (h.real ? ' · ' + h.real : ''); }
   let hiloActivo = null, mqtt = null, conectado = false, reintento = null;
   const visTopIn = BASE + '/' + visId + '/in', visTopOut = BASE + '/' + visId + '/out';
 
@@ -860,19 +870,19 @@
       return;
     }
 
-    if (!hilos[idV]) hilos[idV] = { nombre: 'Visitante ' + idV.slice(1, 5).toUpperCase(), msgs: [], noLeidos: 0, typing: 0 };
+    if (!hilos[idV]) { hilos[idV] = { num: ++numCliente, real: '', msgs: [], noLeidos: 0, typing: 0 }; lsGuardar(LS.adNum, numCliente); }
     const h = hilos[idV];
-    if (datos.n) h.nombre = datos.n;
+    if (datos.n) h.real = datos.n;
 
     if (lado === 'typ') { h.typing = Date.now(); renderChats(); return; }
 
     if (lado === 'in') {
-      if (datos.c === 'nom') { h.nombre = datos.n || h.nombre; adGuardar(); renderChats(); return; }
+      if (datos.c === 'nom') { if (datos.n) h.real = datos.n; adGuardar(); renderChats(); return; }
       agregar(h, { de: 'tu', m: datos.m, h: datos.h || '' });
       if (idV !== hiloActivo || document.hidden) h.noLeidos++;
       adGuardar(); renderChats();
       if (idV === hiloActivo && !document.hidden) renderHilo();
-      avisar(h.nombre, datos.m);
+      avisar(nombreCliente(h), datos.m);
     } else if (lado === 'out') {
       if (!agregar(h, { de: 'yo', m: datos.m, h: datos.h || '' })) return; // eco propio / duplicado
       adGuardar(); renderChats();
@@ -928,8 +938,8 @@
       const ultimo = h.msgs.length ? h.msgs[h.msgs.length - 1].m : 'Sin mensajes';
       const f = document.createElement('button');
       f.className = 'fila' + (id === hiloActivo ? ' activo' : '');
-      f.innerHTML = '<span class="av">' + esc((h.nombre || '?').charAt(0).toUpperCase()) + '</span>' +
-        '<span class="info"><span class="f-n">' + esc(h.nombre) + '</span>' +
+      f.innerHTML = '<span class="av">' + esc(String(h.num || '?')) + '</span>' +
+        '<span class="info"><span class="f-n">' + esc(nombreCliente(h)) + '</span>' +
         '<span class="f-u' + (escribiendo ? ' escribiendo' : '') + '">' + (escribiendo ? 'escribiendo…' : esc(ultimo)) + '</span></span>' +
         (h.noLeidos ? '<span class="no-leidos">' + h.noLeidos + '</span>' : '');
       f.onclick = () => abrirHilo(id);
@@ -994,6 +1004,7 @@
     if (chatPanel.classList.contains('abierto')) { chatBtn.removeAttribute('data-dot'); chatMsg.focus(); }
   });
   chatCerrar.addEventListener('click', () => chatPanel.classList.remove('abierto'));
+  chatPanel.addEventListener('click', e => e.stopPropagation());
   document.addEventListener('click', e => {
     if (!chatPanel.contains(e.target) && !chatBtn.contains(e.target)) chatPanel.classList.remove('abierto');
   });
@@ -1017,6 +1028,7 @@
 
   /* ---- Exportar conversaciones (admin) ---- */
   chatExport.addEventListener('click', () => {
+    if (!confirm('¿Descargar TODAS las conversaciones en un archivo .json?')) return;
     const blob = new Blob([JSON.stringify(hilos, null, 2)], { type: 'application/json' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
