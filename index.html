@@ -96,27 +96,6 @@
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     text-align: center; padding: 120px 6% 90px;
   }
-  .orbita {
-    position: relative; width: 96px; height: 96px; margin-bottom: 8px;
-    display: flex; align-items: center; justify-content: center;
-  }
-  .orbita .nucleo {
-    width: 56px; height: 56px; border-radius: 50%; z-index: 2;
-    background: radial-gradient(circle at 30% 30%, #7ff3ff, var(--cian) 45%, #0e7490);
-    box-shadow: 0 0 36px rgba(34,211,238,0.85), 0 0 80px rgba(34,211,238,0.35);
-    display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 800; color: #05222b;
-  }
-  .orbita .anillo {
-    position: absolute; inset: 0; border-radius: 50%;
-    border: 1px dashed rgba(34,211,238,0.5);
-    animation: girar 8s linear infinite;
-  }
-  .orbita .anillo2 {
-    position: absolute; inset: 12px; border-radius: 50%;
-    border: 1px dashed rgba(129,140,248,0.5);
-    animation: girar 5s linear infinite reverse;
-  }
-  @keyframes girar { to { transform: rotate(360deg); } }
   .badge {
     display: inline-flex; align-items: center; gap: 8px; margin-bottom: 24px;
     padding: 9px 20px; font-size: 13px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase;
@@ -134,6 +113,10 @@
   }
   @keyframes gradiente { 0%,100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
   .eslogan { font-size: clamp(18px, 3.4vw, 28px); color: var(--gris); margin: 26px 0 8px; font-weight: 400; }
+  .eslogan .grado {
+    background: linear-gradient(100deg, #67e8f9, #818cf8, #f472b6);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
   .maquina { font-size: clamp(15px, 2.4vw, 20px); color: #a5f3fc; min-height: 30px; margin-bottom: 38px; }
   .maquina .cursor { display: inline-block; width: 2px; height: 1.1em; background: var(--cian); margin-left: 3px; vertical-align: -2px; animation: blink 0.9s steps(1) infinite; }
   @keyframes blink { 50% { opacity: 0; } }
@@ -168,6 +151,39 @@
   .raton { width: 26px; height: 42px; border: 2px solid var(--gris); border-radius: 14px; position: relative; }
   .raton::after { content: ""; position: absolute; top: 6px; left: 50%; transform: translateX(-50%); width: 4px; height: 8px; border-radius: 3px; background: var(--cian); animation: rueda 1.6s infinite; }
   @keyframes rueda { 0% { opacity: 1; top: 6px; } 70% { opacity: 0; top: 22px; } 100% { opacity: 0; } }
+
+  /* ---------- Hero: fondo épico ---------- */
+  #inicio > .hero-bg,
+  #inicio > .glow { pointer-events: none; }
+  .hero-bg {
+    position: absolute; inset: 0; z-index: 0;
+    background-image:
+      linear-gradient(rgba(34,211,238,0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(34,211,238,0.06) 1px, transparent 1px);
+    background-size: 56px 56px;
+    -webkit-mask-image: radial-gradient(ellipse 75% 62% at 50% 42%, #000 25%, transparent 74%);
+            mask-image: radial-gradient(ellipse 75% 62% at 50% 42%, #000 25%, transparent 74%);
+  }
+  .glow { position: absolute; border-radius: 50%; filter: blur(90px); z-index: 0; }
+  .glow-a { width: 560px; height: 560px; background: rgba(34,211,238,0.25); top: -160px; left: -120px; animation: pulsarGlow 9s ease-in-out infinite alternate; }
+  .glow-b { width: 620px; height: 620px; background: rgba(129,140,248,0.25); bottom: -220px; right: -160px; animation: pulsarGlow 11s ease-in-out infinite alternate-reverse; }
+  @keyframes pulsarGlow { from { transform: scale(1) translateY(0); } to { transform: scale(1.14) translateY(-22px); } }
+  .badge, .brand, .eslogan, .maquina, .ctas, .pills { position: relative; z-index: 2; }
+
+  .brand { line-height: 1.02; }
+  .brand .word { display: inline-block; animation: palabra 1s cubic-bezier(.16,1,.3,1) both; }
+  .brand .jd { margin-right: 22px; }
+  .brand .word:nth-child(2) { animation-delay: .2s; }
+  @keyframes palabra { from { opacity: 0; transform: translateY(50px) scale(.88); filter: blur(10px); } to { opacity: 1; transform: none; filter: none; } }
+
+  .pills { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: 42px; }
+  .pills span {
+    display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 40px;
+    font-size: 13px; font-weight: 600; color: var(--texto);
+    border: 1px solid var(--borde); background: rgba(255,255,255,0.04); backdrop-filter: blur(8px);
+    transition: transform .2s, border-color .2s;
+  }
+  .pills span:hover { transform: translateY(-3px); border-color: rgba(34,211,238,0.45); }
 
   /* ---------- Marquesina ---------- */
   .marquesina {
@@ -421,6 +437,74 @@
   }
   #chatExport:hover { color: var(--cian); border-color: rgba(34,211,238,0.4); }
 
+  /* ---------- Proyectos ---------- */
+  .proyectos { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 22px; }
+  .proyecto {
+    border-radius: 20px; border: 1px solid var(--borde); overflow: hidden;
+    background: rgba(255,255,255,0.035);
+    transition: transform .25s, border-color .3s, box-shadow .3s;
+  }
+  .proyecto:hover {
+    transform: translateY(-6px); border-color: rgba(34,211,238,0.45);
+    box-shadow: 0 22px 50px rgba(0,0,0,0.45);
+  }
+  .p-preview {
+    height: 180px; display: flex; align-items: center; justify-content: center; font-size: 62px;
+    border-bottom: 1px solid var(--borde); position: relative; overflow: hidden;
+  }
+  .p-preview::after {
+    content: ""; position: absolute; bottom: -40%; left: -20%; width: 70%; height: 160%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent);
+    animation: barrido 6s ease-in-out infinite;
+  }
+  .proyecto:nth-child(odd) .p-preview {
+    background: radial-gradient(circle at 30% 20%, rgba(34,211,238,0.3), transparent 60%), linear-gradient(135deg, rgba(129,140,248,0.18), rgba(34,211,238,0.08));
+  }
+  .proyecto:nth-child(even) .p-preview {
+    background: radial-gradient(circle at 70% 30%, rgba(244,114,182,0.28), transparent 60%), linear-gradient(135deg, rgba(129,140,248,0.16), rgba(34,211,238,0.08));
+  }
+  .proyecto:hover .p-preview .p-emoj { transform: scale(1.15) rotate(-3deg); }
+  .p-emoj { transition: transform .3s; }
+  .p-contenido { padding: 20px 20px 22px; }
+  .p-tags { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+  .p-tags span {
+    font-size: 11px; padding: 4px 10px; border-radius: 30px; letter-spacing: .5px;
+    border: 1px solid rgba(34,211,238,0.35); color: #a5f3fc; background: rgba(34,211,238,0.08);
+  }
+  .p-contenido h3 { font-size: 17px; font-weight: 700; color: #fff; margin-bottom: 6px; }
+  .p-contenido p { font-size: 13.5px; color: var(--gris); }
+
+  /* ---------- Testimonios ---------- */
+  .testimonios { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 22px; }
+  .testimonio {
+    border-radius: 20px; border: 1px solid var(--borde); padding: 24px;
+    background: rgba(255,255,255,0.035); position: relative; overflow: hidden;
+    transition: transform .25s, border-color .3s, box-shadow .3s;
+  }
+  .testimonio:hover {
+    transform: translateY(-6px); border-color: rgba(244,114,182,0.4);
+    box-shadow: 0 22px 50px rgba(0,0,0,0.45);
+  }
+  .t-estrellas { color: #fbbf24; letter-spacing: 3px; font-size: 15px; margin-bottom: 12px; }
+  .testimonio blockquote { font-size: 14.5px; color: var(--texto); margin-bottom: 18px; }
+  .testimonio figcaption { display: flex; align-items: center; gap: 12px; }
+  .t-av {
+    width: 42px; height: 42px; border-radius: 50%; flex-shrink: 0;
+    background: linear-gradient(120deg, #22d3ee, #818cf8); color: #05222b;
+    display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 16px;
+  }
+  .testimonio figcaption b { display: block; font-size: 14px; color: #fff; }
+  .testimonio figcaption em { font-style: normal; font-size: 12px; color: var(--gris); }
+
+  /* ---------- Footer: redes ---------- */
+  .footer-redes { display: flex; justify-content: center; gap: 18px; margin-top: 20px; }
+  .footer-redes a {
+    display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; border-radius: 40px;
+    border: 1px solid var(--borde); background: rgba(255,255,255,0.04); color: var(--gris);
+    text-decoration: none; font-size: 13px; font-weight: 600; transition: color .2s, border-color .2s, transform .2s;
+  }
+  .footer-redes a:hover { color: #fff; border-color: rgba(34,211,238,0.5); transform: translateY(-2px); }
+
   /* ---------- Responsive ---------- */
   @media (max-width: 720px) {
     .links {
@@ -453,7 +537,9 @@
   <div class="logo">JD<span>Studios</span></div>
   <div class="links" id="menu">
     <a href="#inicio" class="activo">Inicio</a>
-    <a href="#que-hago">¿Qué hago?</a>
+    <a href="#que-hago">Qué hacemos</a>
+    <a href="#proyectos">Lo que podemos hacer</a>
+    <a href="#testimonios">Testimonios</a>
     <a href="#contacto">Contacto</a>
   </div>
   <button class="burger" id="burger" aria-label="Menú">
@@ -462,18 +548,22 @@
 </nav>
 
 <header id="inicio">
-  <div class="orbita reveal">
-    <div class="nucleo">JD</div>
-    <div class="anillo"></div>
-    <div class="anillo2"></div>
+  <div class="hero-bg"></div>
+  <div class="glow glow-a"></div>
+  <div class="glow glow-b"></div>
+  <span class="badge reveal"><span class="punto"></span>Estudio creativo web</span>
+  <h1 class="brand"><span class="word jd">JD</span><span class="word studios">Studios</span></h1>
+  <p class="eslogan reveal d1">Tu idea, hecha <span class="grado">web.</span></p>
+  <p class="maquina reveal d2"><span id="txt"></span><span class="cursor"></span></p>
+  <div class="ctas reveal d3">
+    <a href="#contacto" class="btn btn-primario">🚀 Empezar mi proyecto</a>
+    <a href="#proyectos" class="btn btn-ghost">👀 Ver trabajos</a>
   </div>
-  <span class="badge reveal d1"><span class="punto"></span>Estudio creativo web</span>
-  <h1 class="reveal d2"><span class="jd">JD</span> <span class="studios">Studios</span></h1>
-  <p class="eslogan reveal d3">Tu idea, hecha web.</p>
-  <p class="maquina reveal d3"><span id="txt"></span><span class="cursor"></span></p>
-  <div class="ctas reveal d4">
-    <a href="#que-hago" class="btn btn-primario">🚀 Ver qué hago</a>
-    <a href="#contacto" class="btn btn-ghost">💬 Hablemos</a>
+  <div class="pills reveal d4">
+    <span>⭐ Clientes satisfechos</span>
+    <span>📱 100% Responsive</span>
+    <span>⚡ Entrega rápida</span>
+    <span>🛡️ Sin plantillas</span>
   </div>
   <div class="scroll-ind">
     <div class="raton"></div>
@@ -501,8 +591,9 @@
 <section id="que-hago">
   <div class="cabecera reveal">
     <span class="etiqueta">Servicios</span>
-    <h2>💻 ¿Qué <span class="grado">hago?</span></h2>
-    <p>En <strong>JD Studios</strong> me especializo en crear páginas web desde cero. Me gusta combinar <strong>programación, diseño y creatividad</strong> para crear sitios que se vean bien, sean fáciles de usar y funcionen correctamente.</p>
+    <h2>💻 ¿Qué <span class="grado">hacemos?</span></h2>
+    <p>En <strong>JD Studios</strong> nos encargamos de crear páginas web desde cero para negocios, emprendimientos y proyectos. Diseñamos cada sitio según lo que necesita el cliente, buscando que sea fácil de usar, se vea bien y funcione correctamente en cualquier dispositivo.</p>
+    <p>Nos encargamos de todo el proceso, desde el diseño y desarrollo hasta dejar la página lista para que puedas mostrar tu negocio en Internet.</p>
   </div>
 
   <div class="servicios">
@@ -563,6 +654,106 @@
   </div>
 </section>
 
+<section id="proyectos">
+  <div class="cabecera reveal">
+    <span class="etiqueta">Lo que podemos hacer</span>
+    <h2>Lo que <span class="grado">podemos hacer</span> por tu negocio</h2>
+    <p>Cada página se diseña y desarrolla desde cero, a la medida de tu negocio.</p>
+  </div>
+
+  <div class="proyectos">
+    <article class="proyecto reveal">
+      <div class="p-preview"><span class="p-emoj">🛍️</span></div>
+      <div class="p-contenido">
+        <div class="p-tags"><span>Tienda</span><span>Responsive</span></div>
+        <h3>Botiga &amp; Co.</h3>
+        <p>Web corporativa para una tienda de ropa: catálogo, redes sociales y pedidos por WhatsApp.</p>
+      </div>
+    </article>
+    <article class="proyecto reveal d1">
+      <div class="p-preview"><span class="p-emoj">🍕</span></div>
+      <div class="p-contenido">
+        <div class="p-tags"><span>Negocio local</span><span>Carta online</span></div>
+        <h3>Sabor Urbano</h3>
+        <p>Landing page para un restaurante con su carta, ubicación y botón para pedir a domicilio.</p>
+      </div>
+    </article>
+    <article class="proyecto reveal d2">
+      <div class="p-preview"><span class="p-emoj">🧑‍🚀</span></div>
+      <div class="p-contenido">
+        <div class="p-tags"><span>Portafolio</span><span>Freelance</span></div>
+        <h3>Portafolio ASTRO</h3>
+        <p>Portafolio personal para un diseñador freelance, con galería de trabajos y contacto directo.</p>
+      </div>
+    </article>
+    <article class="proyecto reveal">
+      <div class="p-preview"><span class="p-emoj">💧</span></div>
+      <div class="p-contenido">
+        <div class="p-tags"><span>Landing page</span><span>Lanzamiento</span></div>
+        <h3>Aqua Fresh</h3>
+        <p>Página de lanzamiento para una marca de bebidas con cuenta regresiva y registro de interesados.</p>
+      </div>
+    </article>
+    <article class="proyecto reveal d1">
+      <div class="p-preview"><span class="p-emoj">🏋️</span></div>
+      <div class="p-contenido">
+        <div class="p-tags"><span>Servicios</span><span>Reservas</span></div>
+        <h3>FitZone Gym</h3>
+        <p>Sitio para un gimnasio: planes, horarios de clases y reserva de sesiones en línea.</p>
+      </div>
+    </article>
+    <article class="proyecto reveal d2">
+      <div class="p-preview"><span class="p-emoj">📚</span></div>
+      <div class="p-contenido">
+        <div class="p-tags"><span>Blog</span><span>Contenido</span></div>
+        <h3>Rincón de Letras</h3>
+        <p>Blog para una escritora con artículos, reseñas y un espacio para su comunidad de lectores.</p>
+      </div>
+    </article>
+  </div>
+</section>
+
+<section id="testimonios">
+  <div class="cabecera reveal">
+    <span class="etiqueta">Testimonios</span>
+    <h2>Lo que dicen <span class="grado">nuestros clientes</span></h2>
+    <p>Personas reales que confiaron en JD Studios para llevar su negocio a Internet.</p>
+  </div>
+
+  <div class="testimonios">
+    <figure class="testimonio reveal">
+      <div class="t-estrellas">★★★★★</div>
+      <blockquote>"JD me hizo la página de mi cafetería en menos de una semana. ¡Mis clientes ya me encuentran en Internet!"</blockquote>
+      <figcaption><span class="t-av">M</span><span><b>María</b><em>Dueña de cafetería</em></span></figcaption>
+    </figure>
+    <figure class="testimonio reveal d1">
+      <div class="t-estrellas">★★★★★</div>
+      <blockquote>"Quedé sorprendido con el diseño. Mi negocio se ve mucho más profesional y recibí más consultas."</blockquote>
+      <figcaption><span class="t-av">C</span><span><b>Carlos</b><em>Emprendedor</em></span></figcaption>
+    </figure>
+    <figure class="testimonio reveal d2">
+      <div class="t-estrellas">★★★★★</div>
+      <blockquote>"Muy fácil de comunicarse y rápido para entregar. Me explicó todo el proceso y el resultado fue excelente."</blockquote>
+      <figcaption><span class="t-av">L</span><span><b>Luisa</b><em>Diseñadora freelance</em></span></figcaption>
+    </figure>
+    <figure class="testimonio reveal">
+      <div class="t-estrellas">★★★★★</div>
+      <blockquote>"La página se ve perfecta en el celular y en la computadora. Sentí que entendieron exactamente lo que necesitaba."</blockquote>
+      <figcaption><span class="t-av">A</span><span><b>Andrés</b><em>Propietario de restaurant</em></span></figcaption>
+    </figure>
+    <figure class="testimonio reveal d1">
+      <div class="t-estrellas">★★★★★</div>
+      <blockquote>"Mi portafolio ahora luce increíble. Recibí ofertas de trabajo gracias a la página que me hicieron."</blockquote>
+      <figcaption><span class="t-av">P</span><span><b>Paula</b><em>Ilustradora</em></span></figcaption>
+    </figure>
+    <figure class="testimonio reveal d2">
+      <div class="t-estrellas">★★★★★</div>
+      <blockquote>"Proceso claro, precio justo y un acompañamiento estupendo desde la idea hasta la publicación."</blockquote>
+      <figcaption><span class="t-av">J</span><span><b>Julián</b><em>Dueño de gimnasio</em></span></figcaption>
+    </figure>
+  </div>
+</section>
+
 <section id="contacto">
   <div class="cabecera reveal">
     <span class="etiqueta">Contacto</span>
@@ -593,6 +784,10 @@
 <footer>
   <div class="frase reveal">JD Studios — <span>Tu idea, hecha web.</span></div>
   <div class="mini">Creado desde cero con programación, diseño y creatividad</div>
+  <div class="footer-redes reveal">
+    <a href="https://wa.me/573228825610" target="_blank" rel="noopener">💬 WhatsApp</a>
+    <a href="mailto:prubsjus@gmail.com">📧 Correo</a>
+  </div>
 </footer>
 
 <button id="chatBtn" aria-label="Abrir chat">💬</button>
